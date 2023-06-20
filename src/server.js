@@ -35,11 +35,23 @@ const sockets = []
 
 wss.on("connection",(socket)=>{
   sockets.push(socket)
+  socket["nickname"]="annoymous"
   console.log("connect to Browser");
   //close라는 이벤트를 리슨, close를 발생시키려면 서버를 끄면 됨
   socket.on("close",onSocketClose)
-  socket.on("message",(message)=>{ sockets.forEach(aSocket=>aSocket.send(message.toString()))})
-  // socket.send("hello")
+  socket.on("message",(msg)=>{ 
+    const message = JSON.parse(msg)
+    switch (message.type){
+      case "new_message":
+        console.log(socket.nickname)
+        sockets.forEach(aSocket=>aSocket.send(`${socket.nickname}:${message.payload.toString()}`))
+        break
+      case "nickname":
+        socket["nickname"] = message.payload
+        break
+
+    }
+  })
 })
 server.listen(3000, handleListen)
 
