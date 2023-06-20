@@ -21,12 +21,24 @@ const server = http.createServer(app)
 //server에 접근 가능 => websocket생성 가능
 const wss = new Websocket.Server({server})
 
+const  onSocketClose =()=> {
+  console.log("Disconnected from the Browser❌")
+}
+
+function onSocketMessage (message){
+  socket.send(message.toString("utf-8"));
+  // socket.send(message.toString("utf-8"))
+}
+
+// 여러 소켓을 구성
+const sockets = []
 
 wss.on("connection",(socket)=>{
+  sockets.push(socket)
   console.log("connect to Browser");
   //close라는 이벤트를 리슨, close를 발생시키려면 서버를 끄면 됨
-  socket.on("close",() => {console.log("Disconnected from the Browser❌")})
-  socket.on("message",(message)=>{console.log(message.toString("utf-8"))})
+  socket.on("close",onSocketClose)
+  socket.on("message",(message)=>{ sockets.forEach(aSocket=>aSocket.send(message.toString()))})
   socket.send("hello")
 })
 server.listen(3000, handleListen)
