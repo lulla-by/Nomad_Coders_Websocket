@@ -39,7 +39,7 @@ wss.on("connection",(socket)=>{
   //close라는 이벤트를 리슨, close를 발생시키려면 서버를 끄면 됨
   socket.on("close",onSocketClose)
   socket.on("message",(message)=>{ sockets.forEach(aSocket=>aSocket.send(message.toString()))})
-  socket.send("hello")
+  // socket.send("hello")
 })
 server.listen(3000, handleListen)
 
