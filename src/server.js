@@ -27,7 +27,9 @@ function publicRooms() {
   rooms.forEach((_,key)=>
   {if(sids.get(key)===undefined){
     publicRooms.push(key)
+    // console.log(publicRooms)
   }});
+  // 현재 우리 서버안에 있는 모든 서버의 어레이를 제공
   return publicRooms
 }
 
@@ -46,6 +48,11 @@ wsServer.on("connection", socket => {
     done()
     // 해당 룸으로 본인을 제외하고 emit을 보냄
     socket.to(roomName).emit("welcome", socket.nickname);
+    // server.sockets.emit("hi","everyone") => 메세지를 모두에게 보내주는 것
+    wsServer.sockets.emit("room_change",publicRooms())
+  })
+  socket.on("disconnect",()=>{
+    wsServer.sockets.emit("room_change",publicRooms())
   })
   socket.on("disconnecting", () => {
     socket.rooms.forEach(room => { socket.to(room).emit("bye", socket.nickname) })

@@ -57,11 +57,24 @@ function addMessage(message) {
 
 // welcome을 받으면 함수 실행
 socket.on("welcome", (user) => {
-  addMessage(` ${user} Joined!`)
+  addMessage(` ${user} Joined!`);
 })
 
 socket.on("bye", (user) => {
-  addMessage(`${user} left!`)
+  addMessage(`${user} left!`);
 })
 
 socket.on("new_message", addMessage)
+
+socket.on("room_change", (rooms) => {
+  const roomlist = welcome.querySelector("ul");
+  roomlist.innerHTML = "";
+  if(rooms.length === 0){
+    return;
+  }
+  rooms.forEach((room) => {
+    const li = document.createElement("li");
+    li.innerText = room;
+    roomlist.append(li);
+  });
+})
