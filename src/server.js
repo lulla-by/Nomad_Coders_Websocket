@@ -28,6 +28,13 @@ wsServer.on("connection", socket => {
     // 해당 룸으로 본인을 제외하고 emit을 보냄
     socket.to(roomName).emit("welcome");
   })
+  socket.on("disconnecting",()=>{
+    socket.rooms.forEach(room=>{socket.to(room).emit("bye")})
+  })
+  socket.on("new_message",(msg,room,done)=>{
+    socket.to(room).emit("new_message",msg)
+    done();
+  })
 })
 httpServer.listen(3000, handleListen);
 
