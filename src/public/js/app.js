@@ -2,19 +2,28 @@
 const socket = io();
 
 //socket.io에는 기본적으로 room기능이 있음
-const welcome = document.getElementById("welcome")
-const form = welcome.querySelector("form")
+const welcome = document.getElementById("welcome");
+const form = welcome.querySelector("form");
+const room = document.getElementById("room");
 
-function backendDone(msg){
-  console.log("backend done!✅"+msg);
+room.hidden = true;
+
+let roomName = ""
+
+function showRoom() {
+  welcome.hidden = true;
+  room.hidden = false;
+  const h3 = room.querySelector("h3")
+  h3.innerText = `Room ${roomName}`
 }
-function handleRoomSubmit(e){
-e.preventDefault();
-const input = form.querySelector("input");
-// websocket에 비해 향상된 점
-// => 커스텀 이벤트 생성가능, 객체를 payload로 보낼 수 있음, 서버에서 호출하는 함수
-socket.emit("enter_room",input.value,backendDone);
-input.value="";
+function handleRoomSubmit(e) {
+  e.preventDefault();
+  const input = form.querySelector("input");
+  // websocket에 비해 향상된 점
+  // => 커스텀 이벤트 생성가능, 객체를 payload로 보낼 수 있음, 서버에서 호출하는 함수
+  socket.emit("enter_room", input.value, showRoom);
+  roomName = input.value
+  input.value = "";
 }
 
-form.addEventListener("submit",handleRoomSubmit)
+form.addEventListener("submit", handleRoomSubmit)

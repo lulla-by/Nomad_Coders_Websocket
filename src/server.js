@@ -18,12 +18,13 @@ const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
 wsServer.on("connection", socket => {
+  socket.onAny((event)=>{
+    console.log(`Socket Event:${event}`);
+  })
   // 커스텀 이벤트를 받아오고, 객체 출력이 가능, callback함수 실행
   socket.on("enter_room", (roomName,done) => {
-    console.log(roomName);
-    setTimeout(() => {
-      done("완료!")
-    }, 5000);
+    socket.join(roomName);
+    done()
   })
 })
 httpServer.listen(3000, handleListen);
