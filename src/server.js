@@ -17,23 +17,45 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`);
 const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
+
+
+// 방리스트
+
+function publicRooms() {
+  const { sockets: { adapter: { sids, rooms } } } = wsServer;
+  const publicRooms=[];
+  rooms.forEach((_,key)=>
+  {if(sids.get(key)===undefined){
+    publicRooms.push(key)
+  }});
+  return publicRooms
+}
+
+
+
+
 wsServer.on("connection", socket => {
-  socket.onAny((event)=>{
+  socket["nickname"] = "Anon"
+  socket.onAny((event) => {
+    console.log(wsServer.sockets.adapter);
     console.log(`Socket Event:${event}`);
   })
   // 커스텀 이벤트를 받아오고, 객체 출력이 가능, callback함수 실행
-  socket.on("enter_room", (roomName,done) => {
+  socket.on("enter_room", (roomName, done) => {
     socket.join(roomName);
     done()
     // 해당 룸으로 본인을 제외하고 emit을 보냄
-    socket.to(roomName).emit("welcome");
+    socket.to(roomName).emit("welcome", socket.nickname);
   })
-  socket.on("disconnecting",()=>{
-    socket.rooms.forEach(room=>{socket.to(room).emit("bye")})
+  socket.on("disconnecting", () => {
+    socket.rooms.forEach(room => { socket.to(room).emit("bye", socket.nickname) })
   })
-  socket.on("new_message",(msg,room,done)=>{
-    socket.to(room).emit("new_message",msg)
+  socket.on("new_message", (msg, room, done) => {
+    socket.to(room).emit("new_message", `${socket.nickname} : ${msg}`)
     done();
+  })
+  socket.on("nickname", (nickname) => {
+    socket["nickname"] = nickname
   })
 })
 httpServer.listen(3000, handleListen);

@@ -12,11 +12,18 @@ let roomName = ""
 
 function handleMessageSubmit(e) {
   e.preventDefault();
-  const input = room.querySelector("input");
-  socket.emit("new_message",input.value,roomName,()=>{
+  const input = room.querySelector("#msg input");
+  socket.emit("new_message", input.value, roomName, () => {
     addMessage(`You: ${input.value}`)
-    input.value=""
+    input.value = ""
   });
+}
+
+function handleNicknameSubmit(e) {
+  e.preventDefault();
+  const input = room.querySelector("#name input");
+  const value = input.value;
+  socket.emit("nickname", input.value)
 }
 
 function showRoom() {
@@ -24,8 +31,10 @@ function showRoom() {
   room.hidden = false;
   const h3 = room.querySelector("h3")
   h3.innerText = `Room ${roomName}`
-  const form = room.querySelector("form");
-  form.addEventListener("submit",handleMessageSubmit)
+  const msgForm = room.querySelector("#msg");
+  const nameForm = room.querySelector("#name");
+  msgForm.addEventListener("submit", handleMessageSubmit)
+  nameForm.addEventListener("submit", handleNicknameSubmit)
 }
 function handleRoomSubmit(e) {
   e.preventDefault();
@@ -47,12 +56,12 @@ function addMessage(message) {
 }
 
 // welcome을 받으면 함수 실행
-socket.on("welcome", () => {
-addMessage("Someone Joined!")
+socket.on("welcome", (user) => {
+  addMessage(` ${user} Joined!`)
 })
 
-socket.on("bye",()=>{
-  addMessage("Someone left!")
+socket.on("bye", (user) => {
+  addMessage(`${user} left!`)
 })
 
-socket.on("new_message",addMessage)
+socket.on("new_message", addMessage)
