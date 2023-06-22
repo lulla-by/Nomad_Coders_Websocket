@@ -33,35 +33,48 @@ function publicRooms() {
   return publicRooms
 }
 
-
+// 참가자 수를 세는 함수
+function countRoom(roomName) {
+return  wsServer.sockets.adapter.rooms.get(roomName)?.size;
+}
 
 
 wsServer.on("connection", socket => {
+  //연결
   wsServer.sockets.emit("room_change",publicRooms())
   socket["nickname"] = "Anon"
   socket.onAny((event) => {
     console.log(wsServer.sockets.adapter);
     console.log(`Socket Event:${event}`);
   })
-  // 커스텀 이벤트를 받아오고, 객체 출력이 가능, callback함수 실행
+  // 방생성,입장
   socket.on("enter_room", (roomName, done) => {
+    // 입장
     socket.join(roomName);
-    done()
-    // 해당 룸으로 본인을 제외하고 emit을 보냄
-    socket.to(roomName).emit("welcome", socket.nickname);
-    // server.sockets.emit("hi","everyone") => 메세지를 모두에게 보내주는 것
+    done(countRoom(roomName))
+    // 입장 메세지
+    socket.to(roomName).emit("welcome", socket.nickname,countRoom(roomName));
+    // 방 생성
     wsServer.sockets.emit("room_change",publicRooms())
   })
+
+  // 방 삭제
   socket.on("disconnect",()=>{
     wsServer.sockets.emit("room_change",publicRooms())
   })
+
+  // 채팅방 나가기 직전
   socket.on("disconnecting", () => {
-    socket.rooms.forEach(room => { socket.to(room).emit("bye", socket.nickname) })
+    socket.rooms.forEach(room => { socket.to(room).emit("bye", socket.nickname,countRoom(room)-1) })
   })
+
+  // 메세지
   socket.on("new_message", (msg, room, done) => {
     socket.to(room).emit("new_message", `${socket.nickname} : ${msg}`)
     done();
   })
+
+  //닉네임 변경
   socket.on("nickname", (nickname) => {
     socket["nickname"] = nickname
   })

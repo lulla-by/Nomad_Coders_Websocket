@@ -26,11 +26,12 @@ function handleNicknameSubmit(e) {
   socket.emit("nickname", input.value)
 }
 
-function showRoom() {
+function showRoom(newcount) {
   welcome.hidden = true;
   room.hidden = false;
   const h3 = room.querySelector("h3")
-  h3.innerText = `Room ${roomName}`
+  console.log(newcount);
+  h3.innerText = `Room ${roomName} (${newcount}) `
   const msgForm = room.querySelector("#msg");
   const nameForm = room.querySelector("#name");
   msgForm.addEventListener("submit", handleMessageSubmit)
@@ -56,11 +57,15 @@ function addMessage(message) {
 }
 
 // welcome을 받으면 함수 실행
-socket.on("welcome", (user) => {
+socket.on("welcome", (user,newCount) => {
+  const h3 = room.querySelector("h3")
+  h3.innerText = `Room ${roomName} (${newCount})`
   addMessage(` ${user} Joined!`);
 })
 
-socket.on("bye", (user) => {
+socket.on("bye", (user,newCount) => {
+  const h3 = room.querySelector("h3")
+  h3.innerText = `Room ${roomName} (${newCount})`
   addMessage(`${user} left!`);
 })
 
