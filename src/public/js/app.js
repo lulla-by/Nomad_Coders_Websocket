@@ -5,13 +5,15 @@ const socket = io();
 const welcome = document.getElementById("welcome")
 const form = welcome.querySelector("form")
 
-
+function backendDone(msg){
+  console.log("backend done!✅"+msg);
+}
 function handleRoomSubmit(e){
 e.preventDefault();
 const input = form.querySelector("input");
 // websocket에 비해 향상된 점
 // => 커스텀 이벤트 생성가능, 객체를 payload로 보낼 수 있음, 서버에서 호출하는 함수
-socket.emit("enter_room",{ payload:input.value },()=>{console.log("Server is done");})
+socket.emit("enter_room",input.value,backendDone);
 input.value="";
 }
 
