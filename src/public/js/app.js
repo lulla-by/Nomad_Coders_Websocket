@@ -27,3 +27,15 @@ function handleRoomSubmit(e) {
 }
 
 form.addEventListener("submit", handleRoomSubmit)
+
+function addMessage(message) {
+  const ul = room.querySelector("ul");
+  const li = document.createElement("li");
+  li.innerText = message;
+  ul.appendChild(li);
+}
+
+// welcome을 받으면 함수 실행
+socket.on("welcome", () => {
+addMessage("Someone Joined!")
+})

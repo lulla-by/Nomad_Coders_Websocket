@@ -25,6 +25,8 @@ wsServer.on("connection", socket => {
   socket.on("enter_room", (roomName,done) => {
     socket.join(roomName);
     done()
+    // 해당 룸으로 본인을 제외하고 emit을 보냄
+    socket.to(roomName).emit("welcome");
   })
 })
 httpServer.listen(3000, handleListen);
