@@ -1,7 +1,8 @@
 import express from "express";
 import http from "http";
-import Websocket from "ws";
-import SocketIO from "socket.io";
+// import Websocket from "ws";
+import { Server } from "socket.io";
+import { instrument } from "@socket.io/admin-ui";
 
 const app = express();
 
@@ -15,7 +16,18 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`);
 
 // socket.io방식
 const httpServer = http.createServer(app);
-const wsServer = SocketIO(httpServer);
+const wsServer = new Server(httpServer,
+  {
+    cors: {
+      origin: ["https://admin.socket.io"],
+      credentials: true,
+    },
+  });
+
+instrument(wsServer, {
+  auth: false,
+}
+);
 
 
 
@@ -23,25 +35,26 @@ const wsServer = SocketIO(httpServer);
 
 function publicRooms() {
   const { sockets: { adapter: { sids, rooms } } } = wsServer;
-  const publicRooms=[];
-  rooms.forEach((_,key)=>
-  {if(sids.get(key)===undefined){
-    publicRooms.push(key)
-    // console.log(publicRooms)
-  }});
+  const publicRooms = [];
+  rooms.forEach((_, key) => {
+    if (sids.get(key) === undefined) {
+      publicRooms.push(key)
+      // console.log(publicRooms)
+    }
+  });
   // 현재 우리 서버안에 있는 모든 서버의 어레이를 제공
   return publicRooms
 }
 
 // 참가자 수를 세는 함수
 function countRoom(roomName) {
-return  wsServer.sockets.adapter.rooms.get(roomName)?.size;
+  return wsServer.sockets.adapter.rooms.get(roomName)?.size;
 }
 
 
 wsServer.on("connection", socket => {
   //연결
-  wsServer.sockets.emit("room_change",publicRooms())
+  wsServer.sockets.emit("room_change", publicRooms())
   socket["nickname"] = "Anon"
   socket.onAny((event) => {
     console.log(wsServer.sockets.adapter);
@@ -53,19 +66,19 @@ wsServer.on("connection", socket => {
     socket.join(roomName);
     done(countRoom(roomName))
     // 입장 메세지
-    socket.to(roomName).emit("welcome", socket.nickname,countRoom(roomName));
+    socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName));
     // 방 생성
-    wsServer.sockets.emit("room_change",publicRooms())
+    wsServer.sockets.emit("room_change", publicRooms())
   })
 
   // 방 삭제
-  socket.on("disconnect",()=>{
-    wsServer.sockets.emit("room_change",publicRooms())
+  socket.on("disconnect", () => {
+    wsServer.sockets.emit("room_change", publicRooms())
   })
 
   // 채팅방 나가기 직전
   socket.on("disconnecting", () => {
-    socket.rooms.forEach(room => { socket.to(room).emit("bye", socket.nickname,countRoom(room)-1) })
+    socket.rooms.forEach(room => { socket.to(room).emit("bye", socket.nickname, countRoom(room) - 1) })
   })
 
   // 메세지
