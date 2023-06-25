@@ -83,7 +83,7 @@ function handleMuteClick(e) {
   myStream.getAudioTracks().forEach(track => track.enabled
     = !track.enabled
   );
-  
+
   if (!muted) {
     muteBtn.innerText = "Unmute"
     muted = true;
@@ -105,7 +105,7 @@ function handleCameraClick(e) {
     cameraBtn.innerText = "Turn Camera Off"
     cameraOff = false
 
-  } else { 
+  } else {
     cameraBtn.innerText = "Turn Camera On"
     cameraOff = true
   }
@@ -140,44 +140,66 @@ async function initCall(params) {
 }
 
 
-async function handleWelcomeSubmit (e) {
-e.preventDefault()
-const input = welcomeForm.querySelector("input")
-await initCall()
-// 3. 이벤트를 emit
-socket.emit("join_room",input.value)
-roomName = input.value
-input.value=""
+async function handleWelcomeSubmit(e) {
+  e.preventDefault()
+  const input = welcomeForm.querySelector("input")
+  await initCall()
+  // 3. 이벤트를 emit
+  socket.emit("join_room", input.value)
+  roomName = input.value
+  input.value = ""
 }
 
-welcomeForm.addEventListener("submit",handleWelcomeSubmit)
+welcomeForm.addEventListener("submit", handleWelcomeSubmit)
 
 
 //socket Code
-socket.on("welcome",async ()=>{
+socket.on("welcome", async () => {
   //peer A에서 offer를 생성하여 서버로 전송
- const offer = await myPeerConnection.createOffer();
- myPeerConnection.setLocalDescription(offer)
- console.log("sent the offer");
- socket.emit("offer",offer,roomName)
+  const offer = await myPeerConnection.createOffer();
+  myPeerConnection.setLocalDescription(offer)
+  console.log("sent the offer");
+  socket.emit("offer", offer, roomName)
 })
 
 //peer B는 offer를 받음
-socket.on("offer",async (offer)=>{
-myPeerConnection.setRemoteDescription(offer);
-const answer = await myPeerConnection.createAnswer();
-myPeerConnection.setLocalDescription(answer)
-socket.emit("answer",answer,roomName)
+socket.on("offer", async (offer) => {
+  console.log("receive the offer");
+  myPeerConnection.setRemoteDescription(offer);
+  const answer = await myPeerConnection.createAnswer();
+  myPeerConnection.setLocalDescription(answer)
+  socket.emit("answer", answer, roomName)
+  console.log("sent the answer");
 })
 
-socket.on("answer",answer=>{
+socket.on("answer", answer => {
+  console.log("receive the answer");
   myPeerConnection.setRemoteDescription(answer)
 })
+
+socket.on("ice", (ice) => {
+  console.log("receive candidate")
+  myPeerConnection.addIceCandidate(ice)
+})
+
 //RTC code
 
 
 // addStream대신 makeconnection이라는 함수를 사용, track들을 개별적으로 추가해주는 함수
-function makeConnection(){
-myPeerConnection = new RTCPeerConnection();
-myStream.getTracks().forEach(track=>myPeerConnection.addTrack(track,myStream))
+function makeConnection() {
+  myPeerConnection = new RTCPeerConnection();
+  myPeerConnection.addEventListener("icecandidate", handleIce)
+  myPeerConnection.addEventListener("addstream", handleAddStream)
+  myStream.getTracks().forEach(track => myPeerConnection.addTrack(track, myStream))
+}
+
+function handleIce(data) {
+  console.log("sent candidate")
+  socket.emit("ice", data.candidate, roomName)
+}
+
+function handleAddStream(data) {
+  const peersFace = document.getElementById("peersFace")
+  console.log("My Stream", myStream);
+  peersFace.srcObject = data.stream
 }
