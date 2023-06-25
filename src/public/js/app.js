@@ -10,9 +10,15 @@ const muteBtn = document.getElementById("mute");
 const cameraBtn = document.getElementById("camera");
 const camerasSelect = document.getElementById("cameras");
 
+const call = document.getElementById("call")
+
+call.hidden = true
+
 let myStream;
 let muted = false;
 let cameraOff = false;
+let roomName;
+let myPeerConnection;
 
 
 async function getCameras() {
@@ -69,9 +75,7 @@ async function getMedia(deviceId) {
   }
 }
 
-// console.log(myFace.srcObject)
-
-getMedia()
+// console.log(myFace.srcObject)]
 
 
 
@@ -114,3 +118,51 @@ async function handleCameraChange() {
 muteBtn.addEventListener("click", handleMuteClick)
 cameraBtn.addEventListener("click", handleCameraClick)
 camerasSelect.addEventListener("input", handleCameraChange)
+
+
+
+
+// welcome Form
+
+const welcome = document.getElementById("welcome")
+welcomeForm = welcome.querySelector("form");
+
+async function startMedia(params) {
+  welcome.hidden = true;
+  call.hidden = false;
+  await getMedia()
+  makeConnection()
+}
+
+
+function handleWelcomeSubmit (e) {
+e.preventDefault()
+const input = welcomeForm.querySelector("input")
+socket.emit("join_room",input.value,startMedia)
+roomName = input.value
+input.value=""
+}
+
+welcomeForm.addEventListener("submit",handleWelcomeSubmit)
+
+
+//socket Code
+socket.on("welcome",async ()=>{
+  //peer A에서 offer를 생성하여 서버로 전송
+ const offer = await myPeerConnection.createOffer();
+ myPeerConnection.setLocalDescription(offer)
+ console.log("sent the offer");
+ socket.emit("offer",offer,roomName)
+})
+
+//peer B는 offer를 받음
+socket.on("offer",(offer)=>{
+console.log(offer);
+})
+
+//RTC code
+
+function makeConnection(){
+myPeerConnection = new RTCPeerConnection();
+myStream.getTracks().forEach(track=>myPeerConnection.addTrack(track,myStream))
+}
