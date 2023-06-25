@@ -192,7 +192,19 @@ socket.on("ice", (ice) => {
 
 // addStream대신 makeconnection이라는 함수를 사용, track들을 개별적으로 추가해주는 함수
 function makeConnection() {
-  myPeerConnection = new RTCPeerConnection();
+  myPeerConnection = new RTCPeerConnection({
+    // webRTC를 사용한 실제 서비스나 전문적인 서비스를 만들고 싶다면 반드시 개인 소유의 stun을 구축해야함
+    iceServers:[{
+      urls:[
+        // 구글에서 제공, 반드시 테스트용으로만 사용
+        "stun:stun.l.google.com:19302",
+        "stun:stun1.l.google.com:19302",
+        "stun:stun2.l.google.com:19302",
+        "stun:stun3.l.google.com:19302",
+        "stun:stun4.l.google.com:19302",
+        ],
+    }]
+  });
   myPeerConnection.addEventListener("icecandidate", handleIce)
   myPeerConnection.addEventListener("addstream", handleAddStream)
   myStream.getTracks().forEach(track => myPeerConnection.addTrack(track, myStream))
