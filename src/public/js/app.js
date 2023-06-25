@@ -127,18 +127,25 @@ camerasSelect.addEventListener("input", handleCameraChange)
 const welcome = document.getElementById("welcome")
 welcomeForm = welcome.querySelector("form");
 
-async function startMedia(params) {
+
+// webSocket들의 속도가 media를 가져오는 속도나 연결을 만드느 속도보다 빠름
+// getMedia, makeConnection하고 이벤트를 emit할 것
+async function initCall(params) {
   welcome.hidden = true;
   call.hidden = false;
+  // 1.getMedia
   await getMedia()
+  // 2.makeConnection
   makeConnection()
 }
 
 
-function handleWelcomeSubmit (e) {
+async function handleWelcomeSubmit (e) {
 e.preventDefault()
 const input = welcomeForm.querySelector("input")
-socket.emit("join_room",input.value,startMedia)
+await initCall()
+// 3. 이벤트를 emit
+socket.emit("join_room",input.value)
 roomName = input.value
 input.value=""
 }
@@ -156,12 +163,20 @@ socket.on("welcome",async ()=>{
 })
 
 //peer B는 offer를 받음
-socket.on("offer",(offer)=>{
-console.log(offer);
+socket.on("offer",async (offer)=>{
+myPeerConnection.setRemoteDescription(offer);
+const answer = await myPeerConnection.createAnswer();
+myPeerConnection.setLocalDescription(answer)
+socket.emit("answer",answer,roomName)
 })
 
+socket.on("answer",answer=>{
+  myPeerConnection.setRemoteDescription(answer)
+})
 //RTC code
 
+
+// addStream대신 makeconnection이라는 함수를 사용, track들을 개별적으로 추가해주는 함수
 function makeConnection(){
 myPeerConnection = new RTCPeerConnection();
 myStream.getTracks().forEach(track=>myPeerConnection.addTrack(track,myStream))
