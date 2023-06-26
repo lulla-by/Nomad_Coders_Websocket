@@ -17,22 +17,36 @@ app.get("/*", (req, res) => res.redirect("/"));
 const httpServer = http.createServer(app);
 const wsServer = new Server(httpServer)
 
-wsServer.on("connection",(socket)=>{
-  socket.on("join_room",(roonName) =>{
-    socket.join(roonName)
-    socket.to(roonName).emit("welcome")
+function countRoom(roomName) {
+  return wsServer.sockets.adapter.rooms.get(roomName)?.size;
+}
+
+wsServer.on("connection", (socket) => {
+  socket.on("join_room", (roomName) => {
+    // 인원 수 제한
+    const member = countRoom(roomName);
+    if (member >= 2) {
+      socket.emit("room_full");
+      return;
+    }
+    socket.join(roomName)
+    socket.to(roomName).emit("welcome")
   })
 
-  socket.on("offer",(offer,roomName)=>{
-    socket.to(roomName).emit("offer",offer);
+  socket.on("offer", (offer, roomName) => {
+    socket.to(roomName).emit("offer", offer);
   })
 
-  socket.on("answer",(answer,roomName)=>{
-    socket.to(roomName).emit("answer",answer)
+  socket.on("answer", (answer, roomName) => {
+    socket.to(roomName).emit("answer", answer)
   })
 
-  socket.on("ice",(ice,roomName)=>{
-    socket.to(roomName).emit("ice",ice)
+  socket.on("ice", (ice, roomName) => {
+    socket.to(roomName).emit("ice", ice)
+  })
+
+  socket.on("chat", (roomName, chat) => {
+    socket.to(roomName).emit("chat", chat)
   })
 })
 
